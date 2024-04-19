@@ -61,6 +61,7 @@ namespace min_snap
         // nCoeffMat = [c7*T^7,c6*T^6,c5*T^5,c4*T^4,c3*T^3,c2*T^2,c1*T,c0*1]
         bool synced;
         CoefficientMat nCoeffMat;
+    public:
         inline const CoefficientMat &normalizedCoeffMat(void)
         {
             if (!synced)
@@ -96,7 +97,6 @@ namespace min_snap
             return nCoeffMat;
         }
 
-    public:
         Piece() = default;
 
         // Constructor from boundary condition and duration
