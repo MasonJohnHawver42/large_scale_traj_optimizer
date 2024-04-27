@@ -173,6 +173,28 @@ namespace min_snap
             return acc;
         }
 
+        inline Eigen::Vector3d getJerk(double t)
+        {
+            // Normalize the time
+            t /= duration;
+            Eigen::Vector3d jerk(0.0, 0.0, 0.0);
+            double tn = 1.0;
+            int m = 1;
+            int n = 2;
+            int k = 3;
+            for (int i = TrajOrder - 3; i >= 0; i--)
+            {
+                jerk += m * n * k * tn * normalizedCoeffMat().col(i);
+                tn *= t;
+                m++;
+                n++;
+                k++;
+            }
+            // Recover the actual acc
+            jerk /= duration * duration * duration;
+            return jerk;
+        }
+
         // Get the boundary condition of this piece
         inline const BoundaryCond &getBoundCond() const
         {
@@ -558,6 +580,34 @@ namespace min_snap
             int pieceIdx = locatePieceIdx(t);
             return pieces[pieceIdx].getAcc(t);
         }
+
+        // Get the jerk at time t of the trajectory
+        inline Eigen::Vector3d getJerk(double t)
+        {
+            int pieceIdx = locatePieceIdx(t);
+            return pieces[pieceIdx].getJerk(t);
+        }
+
+        // Get the yaw at time t of the trajectory
+        inline double getYaw(double t, unsigned int axis0, unsigned int axis1)
+        {
+            Eigen::Vector3d vel = getVel(t);
+            double tmp = std::sqrt(vel[axis0] * vel[axis0] + vel[axis1] * vel[axis1]);
+            if (tmp == 0) { return 0; }
+            return std::acos(vel[axis0] / tmp) * (vel[axis1] >= 0 ? 1 : -1);
+        }
+
+        // Get the yaw vel at time t of the trajectory
+        inline double getYawdot(double t, unsigned int axis0, unsigned int axis1)
+        {
+            Eigen::Vector3d vel = getVel(t);
+            Eigen::Vector3d acc = getAcc(t);
+            double tmp = std::sqrt(vel[axis0] * vel[axis0] + vel[axis1] * vel[axis1]);
+            if (tmp == 0) { return 0; }
+            return (vel[axis1] * (vel[axis0] * acc[axis1] - acc[axis0] * vel[axis1])) / (std::pow(tmp, 3) * std::sqrt(1 - std::pow(vel[axis0] / tmp, 2)));
+        }
+
+
 
         // Get the position at the juncIdx-th waypoint
         inline Eigen::Vector3d getJuncPos(int juncIdx) const
